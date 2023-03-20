@@ -1,5 +1,6 @@
-// 000RDB000 Jānis Programmētājs
-// 111RDB111 Ilze Programmētāja
+// 221RDB202 Edvards Bārtulis
+// 221RDB200 Anželika Krasiļņikova
+// 221RDB198 Anastasija Ostrovska
 
 import java.io.FileInputStream;
 import java.io.IOException;
