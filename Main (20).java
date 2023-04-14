@@ -117,4 +117,26 @@ public class Main {
 		System.out.println("111RDB111 Ilze Programmētāja");
 	}
 }
-//try 3
+
+class LZ77{
+	private String sourceFile, resultFile;
+	
+	public LZ77(String sf, String rf) {
+		String sourceFile=sf;
+		String resultFile=rf;
+		System.out.println("Inicialised");
+		
+	}
+	public static void compress() {
+		System.out.println("compressing");
+		match(2,3);
+	}
+	
+	public static void decompress() {
+		System.out.println("decompressing");
+	}
+	private static boolean match(int a, int b) {
+		System.out.println(a==b);
+		return true;
+	}
+}
