@@ -112,9 +112,9 @@ public class Main {
 	}
 	
 	public static void about() {
-		// TODO insert information about authors
-		System.out.println("000RDB000 Jānis Programmētājs");
-		System.out.println("111RDB111 Ilze Programmētāja");
+		System.out.println("221RDB202 Edvards Bārtulis");
+		System.out.println("221RDB200 Anželika Krasiļņikova");
+		System.out.println("221RDB198 Anastasija Ostrovska");
 	}
 }
 // Anželika Krasiļņikova
