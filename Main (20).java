@@ -1,7 +1,7 @@
 // 221RDB202 Edvards Bārtulis
 // 221RDB200 Anželika Krasiļņikova
 // 221RDB198 Anastasija Ostrovska
-// try 4
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Scanner;
@@ -117,7 +117,7 @@ public class Main {
 		System.out.println("111RDB111 Ilze Programmētāja");
 	}
 }
-
+// Anželika Krasiļņikova
 class LZ77{
 	private String sourceFile, resultFile;
 	
@@ -139,4 +139,43 @@ class LZ77{
 		System.out.println(a==b);
 		return true;
 	}
+}
+//Anastasija Ostrovska
+class Huffman{
+  private String firstname, secondname;
+
+  public Huffman(String fn, String sn){
+    String firstname = fn;
+    String secondname = sn;
+    System.out.println("made class");
+  }
+
+  public static ArrayList<String> huf_reader(String name){
+    //nolasa failu, saglabajot katru burtu sarakstā
+    System.out.println("I am reading file ");
+  }
+  public static void Huffman_comp(String firstname, String secondname){
+    //nolasa failu
+    ArrayList<String> text = new ArrayList<String>();
+    text = huf_reader(firstname);
+    //no nolasita faila taisa mapu ar burtiem un biežumiem
+    Map<Character, Integer> map = new HashMap<Character, Integer>();
+    //taisa haffmana koku 
+    System.out.println("huffman compression");
+    //kodē failu 
+  }
+  public static void Huffman_decomp(String firstname, String secondname){
+    //nolasa failu
+    ArrayList<String> text = new ArrayList<String>();
+    text = huf_reader(firstname);
+    //izmantojot haffmana koku dekodē failu
+    System.out.println("huffman decompression");
+  }
+}
+class Huffman_node{
+    int data;
+    char c;
+
+    Huffman_node left;
+    Huffman_node rigth;
 }
