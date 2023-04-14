@@ -1,7 +1,7 @@
 // 221RDB202 Edvards Bārtulis
 // 221RDB200 Anželika Krasiļņikova
 // 221RDB198 Anastasija Ostrovska
-
+// try
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Scanner;
