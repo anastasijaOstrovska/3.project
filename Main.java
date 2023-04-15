@@ -224,3 +224,98 @@ class Huffman_node{
     Huffman_node left;
     Huffman_node rigth;
 }
+
+public class Gzip {
+    public static void mainGz(String[] args) {
+    	
+        String inputFile = 
+        String outputFile = 
+        
+        switch(command){
+	        case "comp":
+	        	
+			    try {
+			        GzipLZ77Compression.compress(inputFile);
+			    } catch (IOException e) {
+			       System.out.println("Error compressing file: " + e.getMessage());
+			    }
+		        try {
+			        GzipHuffmanCompression.compress(inputFile+".lz77", outputFile);
+			        System.out.println("File compressed successfully.");
+			    } catch (IOException e) {
+			        e.printStackTrace();
+			        System.out.println("Error compressing file: " + e.getMessage());
+			    }    	  
+	        case "decomp":
+				try {
+				    GzipLZ77Compression.decompress(inputFile);
+				    
+				} catch (IOException e) {
+				    System.out.println("Error decompressing file: " + e.getMessage());
+				}
+		       try {
+			       GzipHuffmanCompression.decompress(inputFile+".lz77", outputFile);
+			       System.out.println("File decompressed successfully.");
+			    } catch (IOException e) {
+			        e.printStackTrace();
+			       System.out.println("Error decompressing file: " + e.getMessage());
+			    }
+		    default:
+		    	System.out.println("wrong command");
+        }
+    }
+	    
+}
+class GzipLZ77Compression {
+    private static final int WINDOW_SIZE 
+    private static final int LOOKAHEAD_SIZE 
+
+    public static void compress(String inputFile) throws IOException {
+       
+    }
+    public static void decompress(String inputFile) throws IOException {
+        
+    }
+}
+
+class GzipHuffmanCompression {
+    private static final int EOF =
+    private static final int MAX_BITS = 
+
+
+    private static class Node implements Comparable<Node> {
+      
+    }
+
+
+    private static Node buildHuffmanTree(int[] freq) {
+      
+    }
+
+    
+    private static String[] buildCodeTable(Node root) {
+      
+    }
+
+    private static void buildCodeTableHelper(Node node, String code, String[] codeTable) {
+        
+    }
+
+   
+    private static void encode(Reader in, Writer out, String[] codeTable) throws IOException {
+      
+    }
+
+    public static void compress(String inputFile, String outputFile) throws IOException {
+       
+    }
+
+    public static void decompress(String inputFile, String outputFile) throws IOException {
+        
+    }
+
+   
+    private static void decode(InputStream in, Writer out, Node root, String[] codeTable) throws IOException {
+        
+    }
+}
