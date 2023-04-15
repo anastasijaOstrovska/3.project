@@ -3,7 +3,11 @@
 // 221RDB198 Anastasija Ostrovska
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 
@@ -59,10 +63,36 @@ public class Main {
 
 	public static void comp(String sourceFile, String resultFile) {
 		// TODO: implement this method
+		int method=1;
+		switch (method){
+		case 1:
+			LZ77 lz= new LZ77(sourceFile,resultFile);
+			lz.compress();
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		default:
+			System.out.println("wrong method");
+		}
 	}
 
 	public static void decomp(String sourceFile, String resultFile) {
 		// TODO: implement this method
+		int method=1;
+		switch (method){
+		case 1:
+			LZ77 lz= new LZ77(sourceFile,resultFile);
+			lz.decompress();
+			break;
+		case 2:
+			break;
+		case 3:
+			break;
+		default:
+			System.out.println("wrong method");
+		}
 	}
 	
 	public static void size(String sourceFile) {
@@ -120,24 +150,38 @@ public class Main {
 // Anželika Krasiļņikova
 class LZ77{
 	private String sourceFile, resultFile;
+	private int searchBufferSize=1000;
 	
 	public LZ77(String sf, String rf) {
+		// inicializē LZ77 algoritmu
 		String sourceFile=sf;
 		String resultFile=rf;
-		System.out.println("Inicialised");
-		
+		System.out.println("lz77 inicializācija");
 	}
-	public static void compress() {
-		System.out.println("compressing");
-		match(2,3);
+	public void compress() {
+		// saspež failu
+		System.out.println("saspiešana");
+		
+		// meklē atkārtojumus un aizvieto tos ar atsaucēm
+		byte[] b= {0,0};
+		findMatch(b,0);
 	}
 	
-	public static void decompress() {
-		System.out.println("decompressing");
+	public void decompress() {
+		// veic faila decompresiju
+		System.out.println("dekompresija");
 	}
-	private static boolean match(int a, int b) {
-		System.out.println(a==b);
-		return true;
+	private byte[] findMatch (byte[] buffer, int startPosition) {
+		// meklē garāko atkārtojumu un atgriež atsauci uz to
+		System.out.println("meklē garāko atkārtojumu");
+		
+		boolean matched = true;
+		// ja atkārtojums netika atrasts atgriež 'null'
+		if (!matched) return null; 
+		else {
+			byte[] b= {0,0};
+			return b;
+		}
 	}
 }
 //Anastasija Ostrovska
@@ -150,11 +194,12 @@ class Huffman{
     System.out.println("made class");
   }
 
-  public static ArrayList<String> huf_reader(String name){
+  public ArrayList<String> huf_reader(String name){
     //nolasa failu, saglabajot katru burtu sarakstā
     System.out.println("I am reading file ");
+	return null;
   }
-  public static void Huffman_comp(String firstname, String secondname){
+  public void Huffman_comp(String firstname, String secondname){
     //nolasa failu
     ArrayList<String> text = new ArrayList<String>();
     text = huf_reader(firstname);
@@ -164,7 +209,7 @@ class Huffman{
     System.out.println("huffman compression");
     //kodē failu 
   }
-  public static void Huffman_decomp(String firstname, String secondname){
+  public void Huffman_decomp(String firstname, String secondname){
     //nolasa failu
     ArrayList<String> text = new ArrayList<String>();
     text = huf_reader(firstname);
