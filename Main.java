@@ -235,7 +235,7 @@ class Huffman_node{
     Huffman_node left;
     Huffman_node rigth;
 }
-
+// Edvards Bārtulis 
 class Gzip {
 	public static String inputFile, outputFile;
 	
