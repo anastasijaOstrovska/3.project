@@ -5,6 +5,9 @@
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,8 +73,12 @@ public class Main {
 			lz.compress();
 			break;
 		case 2:
+			Huffman Hf = new Huffman(sourceFile,resultFile);
+			Hf.Huffman_comp();
 			break;
 		case 3:
+			Gzip gz= new Gzip(sourceFile,resultFile);
+			gz.mainGz("comp");
 			break;
 		default:
 			System.out.println("wrong method");
@@ -87,8 +94,12 @@ public class Main {
 			lz.decompress();
 			break;
 		case 2:
+			Huffman Hf = new Huffman(sourceFile,resultFile);
+			Hf.Huffman_decomp();
 			break;
 		case 3:
+			Gzip gz= new Gzip(sourceFile,resultFile);
+			gz.mainGz("decomp");
 			break;
 		default:
 			System.out.println("wrong method");
@@ -199,7 +210,7 @@ class Huffman{
     System.out.println("I am reading file ");
 	return null;
   }
-  public void Huffman_comp(String firstname, String secondname){
+  public void Huffman_comp(){
     //nolasa failu
     ArrayList<String> text = new ArrayList<String>();
     text = huf_reader(firstname);
@@ -209,7 +220,7 @@ class Huffman{
     System.out.println("huffman compression");
     //kodē failu 
   }
-  public void Huffman_decomp(String firstname, String secondname){
+  public void Huffman_decomp(){
     //nolasa failu
     ArrayList<String> text = new ArrayList<String>();
     text = huf_reader(firstname);
@@ -225,97 +236,118 @@ class Huffman_node{
     Huffman_node rigth;
 }
 
-public class Gzip {
-    public static void mainGz(String[] args) {
-    	
-        String inputFile = 
-        String outputFile = 
+class Gzip {
+	private static String inputFile, outputFile;
+	
+	public Gzip(String inp, String out) {
+		String inputFile = inp;
+		String outputFile = out;
+		System.out.println("Gzip");
+	}
+    	public static void mainGz(String command) {
         
         switch(command){
 	        case "comp":
-	        	
-			    try {
+	        	// izsauc failu kompresiju
+			try {
 			        GzipLZ77Compression.compress(inputFile);
-			    } catch (IOException e) {
-			       System.out.println("Error compressing file: " + e.getMessage());
-			    }
-		        try {
+			} catch (IOException e) {
+				System.out.println("Error compressing file: " + e.getMessage());
+			}
+			try {
 			        GzipHuffmanCompression.compress(inputFile+".lz77", outputFile);
 			        System.out.println("File compressed successfully.");
-			    } catch (IOException e) {
+			} catch (IOException e) {
 			        e.printStackTrace();
 			        System.out.println("Error compressing file: " + e.getMessage());
-			    }    	  
+			}
+			break;
 	        case "decomp":
-				try {
-				    GzipLZ77Compression.decompress(inputFile);
+			// izsauc failu dekompresiju
+			try {
+				GzipLZ77Compression.decompress(inputFile);
 				    
-				} catch (IOException e) {
-				    System.out.println("Error decompressing file: " + e.getMessage());
-				}
-		       try {
+			} catch (IOException e) {
+				System.out.println("Error decompressing file: " + e.getMessage());
+			}
+		        try {
 			       GzipHuffmanCompression.decompress(inputFile+".lz77", outputFile);
 			       System.out.println("File decompressed successfully.");
-			    } catch (IOException e) {
+			} catch (IOException e) {
 			        e.printStackTrace();
 			       System.out.println("Error decompressing file: " + e.getMessage());
-			    }
-		    default:
+			}
+			break;
+		default:
 		    	System.out.println("wrong command");
         }
     }
 	    
 }
 class GzipLZ77Compression {
-    private static final int WINDOW_SIZE 
-    private static final int LOOKAHEAD_SIZE 
+    private static final int WINDOW_SIZE=4096; 
+    private static final int LOOKAHEAD_SIZE=15;
 
     public static void compress(String inputFile) throws IOException {
-       
+	    // saspiež failu izmantojot LZ77 algoritmu
+	    System.out.println("LZ77Compression");
     }
     public static void decompress(String inputFile) throws IOException {
-        
+	    // dekomprese failu, aizvietojot atsauces ar datu kopijām no faila
+	    System.out.println("LZ77Decompression");
     }
 }
 
 class GzipHuffmanCompression {
-    private static final int EOF =
-    private static final int MAX_BITS = 
+    private static final int EOF=0;
+    private static final int MAX_BITS=0; 
 
 
     private static class Node implements Comparable<Node> {
-      
-    }
+	    // palīgklase, kas satur informāciju par simbolu, tā frekvenci ievades datu straumē 
+	    // un saites uz kreiso un labo atvasi Hafmena kokā.
 
 
-    private static Node buildHuffmanTree(int[] freq) {
-      
-    }
+	    private static Node buildHuffmanTree(int[] freq) {
+		    // veido Huffman koku
+		    System.out.println("Huffman Tree created");
+		    return null;
+	    }
 
-    
-    private static String[] buildCodeTable(Node root) {
-      
+	    private static String[] buildCodeTable(Node root) {
+		    // veido kodu tabulu 
+		    System.out.println("Huffman table created");
+		    return null;
+	    }
     }
 
     private static void buildCodeTableHelper(Node node, String code, String[] codeTable) {
-        
+	    // palīgfunkcija funkcijai buildCodeTable
+	    System.out.println("HuffmanTableHelper");
     }
 
    
     private static void encode(Reader in, Writer out, String[] codeTable) throws IOException {
-      
+	    // atgriež kodēto virkni saskaņā ar Huffman koda koku un kodu tabulu.
+	    System.out.println("HuffmanCompressionHelper");
     }
 
     public static void compress(String inputFile, String outputFile) throws IOException {
-       
+	    // saspiež avota tekstu, izmantojot Huffman algoritmu
+	    System.out.println("HuffmanCompression");
+	    //encode();
     }
 
     public static void decompress(String inputFile, String outputFile) throws IOException {
-        
+	    // dekomprese saspiestu failu tā sākotnējā formātā. 
+            System.out.println("HuffmanDecompression");
+	    //decode();
     }
 
    
     private static void decode(InputStream in, Writer out, Node root, String[] codeTable) throws IOException {
+	    // palig metode Huffaman dekompresijai
+	    System.out.println("HuffmanDecompressionHelper");
         
     }
 }
