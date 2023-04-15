@@ -237,7 +237,7 @@ class Huffman_node{
 }
 
 class Gzip {
-	private static String inputFile, outputFile;
+	public static String inputFile, outputFile;
 	
 	public Gzip(String inp, String out) {
 		String inputFile = inp;
@@ -319,6 +319,12 @@ class GzipHuffmanCompression {
 		    System.out.println("Huffman table created");
 		    return null;
 	    }
+
+		@Override
+		public int compareTo(GzipHuffmanCompression.Node o) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
     }
 
     private static void buildCodeTableHelper(Node node, String code, String[] codeTable) {
