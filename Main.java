@@ -192,7 +192,7 @@ class LZSS{
 		
 	}
 	public void compress() throws IOException{
-		System.out.println("saspiešana");
+		//System.out.println("saspiešana");
 		FileInputStream input;
 		try {		
 			input = new FileInputStream(this.sourceFile);
@@ -203,7 +203,7 @@ class LZSS{
 	    	}
 		// modificē bufera lielumu, ja fails ir mazāks 
 		this.bufferSize1 = Math.min(this.bufferSize1,input.available()/2+input.available()%2);
-        if (bufferSize1<bufferSize2) this.bufferSize2 = this.bufferSize1-input.available()%2;
+        	if (bufferSize1<bufferSize2) this.bufferSize2 = this.bufferSize1-input.available()%2;
 		this.buffer1 = new byte[this.bufferSize1];
 		// nolasa pirmos datus
         	input.read(this.buffer1);
@@ -239,10 +239,7 @@ class LZSS{
 				flagIndex++;
 				flag |= 1<<(8-flagIndex); // piešķir vieninieku bitam taja pozicija kur jābut atsauce
 				
-				if (pointer.length>2){ // ja atsauce sastav no vairāk nekā 2 baitiem
-					position += (pointer[0] & 127)<<8 | (pointer[1] & 0xFF); // iegūt  length vērtību
-					//System.out.println(position);
-				} else position += pointer[0] & 0xFF; 
+				position +=(pointer[0] & 127); // iegūt īsto length vērtību 
 				
 			}
 			
@@ -283,7 +280,7 @@ class LZSS{
 	}
 	
 	public void decompress() throws IOException {
-		System.out.println("dekompresija");
+		//System.out.println("dekompresija");
 		FileInputStream input;
 		try {
 			input = new FileInputStream(this.sourceFile);
@@ -313,9 +310,8 @@ class LZSS{
 				// ja karoga bits sakrīt ar 1, nolasa atsauci
 				length = input.read();
 				if ((length & 1<<7) >0){ // ja pirmais bits ir 1, kopējais atsauces izmērs ir 4 baiti.
-					// nolasa un atgriež int vertību
+					// nolasa un atgriež īsto int vertību
 					length &= 127; 
-					length = length<<8 | input.read();
 					distance = input.read();
 					distance = distance<<8 | input.read();
 					
@@ -395,7 +391,7 @@ class LZSS{
 				length++;
 				//System.out.println(i+" "+length+" "+ buffer[startPosition + length]+"=" + buffer[i + length] );
 		    	}
-		    	if (length >= maxLength && length>=3) {
+		    	if (length >= maxLength && length>=3 && length<127) {
 				maxLength = length;
 				maxDistance = startPosition - i;
 		    	}
@@ -405,16 +401,12 @@ class LZSS{
 			return null; // atgriež null, ja garums ir mazāks par 3
 		} else {
 			byte[] pointer;
-			if (maxLength>127 || maxDistance>255) {
+			if (maxDistance>255) {
 				// ja vērtība ir parāk liela, ieraksta skaitļus divos baitos
-				if (maxLength<=4) {
-					return null; //ja atkartota virkne ir mazāka par iegūto atsauci, neaizvieto to
-				}
-				pointer = new byte[4];
-				pointer[0] = (byte) ((maxLength & 0x0000FF00) >> 8);
-				pointer[1] = (byte) ((maxLength & 0x000000FF) >> 0);
-				pointer[2] = (byte) ((maxDistance & 0x0000FF00) >> 8);
-				pointer[3] = (byte) ((maxDistance & 0x000000FF) >> 0);
+				pointer = new byte[3];
+				pointer[0] = (byte) maxLength;
+				pointer[1] = (byte) ((maxDistance & 0xFF00) >> 8);
+				pointer[2] = (byte) ((maxDistance & 0xFF) >> 0);
 				
 				pointer[0]=(byte) (pointer[0] | 1<<7); // piešķir pirmām bitam "1" vertību, kas norāda atsauces baitu garumu 
 			} else {
