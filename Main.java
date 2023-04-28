@@ -196,44 +196,349 @@ class LZ77{
 	}
 }
 //Anastasija Ostrovska
-class Huffman{
-  private String firstname, secondname;
 
-  public Huffman(String fn, String sn){
-    String firstname = fn;
-    String secondname = sn;
-    System.out.println("made class");
-  }
+class Huffman {
+	
+	Boolean eof;
+	
+	public Huffman(){eof = false;}
+  
+// main function for compress 
+	public void Huffman_encoding(File f, File outfile){
+		try{
+			File infile = f;
+			int[] chFreqs = countFrequency(infile);
+			HuffmanTree<Character> huffTree = buildTreeCoding(chFreqs);
+			HashMap<Character,String> codeMap = buildMapCoding(new HashMap<Character,String>(), huffTree, new StringBuilder());
+			writeFileCoding(huffTree,codeMap, chFreqs[256], outfile, infile);
+		}catch(Exception e){
+			System.out.println("error");
+		}
+	}
+//function countfrequency - count every characters frequency in file 	
+	private int[] countFrequency(File infile){
+		int[] chFreqs = new int[257];
+    byte[] bytes = new byte[(int) infile.length()];
+    // reads file byte by byte and add to chFreqs in ASCII order
+    try{
+      FileInputStream fis = new FileInputStream(infile);
+      fis.read(bytes);
+      for(int i = 0; i < bytes.length; i++){
+        chFreqs[bytes[i]& 0xff]++;
+				chFreqs[256]++;
+      }
+			fis.close();
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return chFreqs;
+	}
 
-  public ArrayList<String> huf_reader(String name){
-    //nolasa failu, saglabajot katru burtu sarakstā
-    System.out.println("I am reading file ");
-	return null;
-  }
-  public void Huffman_comp(){
-    //nolasa failu
-    ArrayList<String> text = new ArrayList<String>();
-    text = huf_reader(firstname);
-    //no nolasita faila taisa mapu ar burtiem un biežumiem
-    Map<Character, Integer> map = new HashMap<Character, Integer>();
-    //taisa haffmana koku 
-    System.out.println("huffman compression");
-    //kodē failu 
-  }
-  public void Huffman_decomp(){
-    //nolasa failu
-    ArrayList<String> text = new ArrayList<String>();
-    text = huf_reader(firstname);
-    //izmantojot haffmana koku dekodē failu
-    System.out.println("huffman decompression");
-  }
+// makes codebook by going throught huffman tree
+  	private HashMap<Character, String> buildMapCoding(HashMap<Character,String> codeMap, HuffmanTree<Character> huffTree, StringBuilder code){
+		if (huffTree.symbol != null){
+			codeMap.put(huffTree.symbol,code.toString());
+		} else {
+
+			code.append(0);
+			codeMap = buildMapCoding(codeMap, huffTree.left, code);
+			code.deleteCharAt(code.length()-1);
+			
+
+			code.append(1);
+			codeMap = buildMapCoding(codeMap, huffTree.right, code);
+			code.deleteCharAt(code.length()-1);
+		}
+		return codeMap;
+	}
+// make huffman tree from character frequencies array
+	private HuffmanTree<Character> buildTreeCoding(int[] chFreqs){
+		PriorityQueue<HuffmanTree<Character>> huffQueue = new PriorityQueue<HuffmanTree<Character>>();
+		HuffmanTree<Character> tempTree, leftTree, rightTree;
+		for(int i = 0; i < chFreqs.length -1 ; i++){
+			if(chFreqs[i] > 0){
+				tempTree = new HuffmanTree<Character>((char) i , chFreqs[i]);
+				huffQueue.offer(tempTree);// insert new values to queue
+			}
+		}
+    // until priority queue has only one element makes combination of nodes 
+		while(huffQueue.size() > 1){
+			leftTree = huffQueue.poll();
+			rightTree = huffQueue.poll();
+			tempTree = new HuffmanTree<Character>(leftTree, rightTree);
+			huffQueue.offer(tempTree);
+		}
+		return huffQueue.poll();
+	}
+
+// writes to file hufman codebook by recoursively going throught all tree
+	private void writeHeader(BinaryWriter output, HuffmanTree<Character> huffTree){
+		if(huffTree.symbol == null){
+			output.write(0);
+			if(huffTree.left != null)  writeHeader(output,huffTree.left);
+			if(huffTree.right != null) writeHeader(output,huffTree.right);
+		}else{
+			output.write(1);
+			Integer symbol = (int) huffTree.symbol.charValue();
+			output.writeByte( Integer.toBinaryString(symbol) );
+		}
+	}
+	
+// writes to fail by replacing all characters from input file by codes from codebook 
+	private void writeFileCoding(HuffmanTree<Character> huffTree, HashMap<Character,String> codeMap, int textLength, File outfile, File infile){
+    String code;
+		try{
+			FileWriter decode = new FileWriter(outfile);
+			BinaryWriter output = new BinaryWriter ( new FileOutputStream(outfile, true) );
+			
+			writeHeader(output, huffTree);
+			output.write(1); //making boarder to separate codebook and text file 
+			output.writeByte("0");
+			byte[] bytes = new byte[(int) infile.length()];
+
+      FileInputStream fis = new FileInputStream(infile);
+      fis.read(bytes);
+      for(int i = 0; i < bytes.length; i++){
+          int b = bytes[i]& 0xff;
+					code = codeMap.get((char)b);
+					for( char bit : code.toCharArray() ){
+						output.write((int) (bit - 48)); //writing in ASCII symbols 
+					}
+      }
+			fis.close();
+			output.close();
+      decode.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	
+	
 }
-class Huffman_node{
-    int data;
-    char c;
 
-    Huffman_node left;
-    Huffman_node rigth;
+// main function for decompression
+	public void Huffman_decoding(File f, File outfile){
+		try{
+			File infile = f;
+			BinaryReader bitreader = new BinaryReader( new FileInputStream(infile) );
+			bitreader.readByte();
+			HuffmanTree<Character> huffTree = buildTree(bitreader);
+			HashMap<String,Character> codeMap = buildMap(new HashMap<String,Character>(), huffTree, new StringBuilder());
+			bitreader.readByte(); bitreader.read();
+			writeFile(outfile, bitreader, codeMap);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+// by reading file makes huffman tree 
+	private HuffmanTree<Character> buildTree(BinaryReader bitreader){
+		try{
+			int bit = 0;
+			int symbol;
+			do{
+				bit = bitreader.read();
+				if(bit == 1){
+					symbol = bitreader.readByte();
+					if(symbol > 0){
+						return new HuffmanTree<Character>((char) symbol, 0);
+					}else{
+						eof = true;
+					}
+				}else if (bit == 0){
+					HuffmanTree<Character> leftTree = buildTree(bitreader);
+					HuffmanTree<Character> rightTree = buildTree(bitreader);
+					return new HuffmanTree<Character>(leftTree,rightTree);
+				}
+			}while(bit!=-1 && eof!=true);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return new HuffmanTree<Character>((char) 0,0);
+	}
+	
+// makes codebook from huffman tree
+	private HashMap<String,Character> buildMap(HashMap<String,Character> codeMap, HuffmanTree<Character> huffTree, StringBuilder code){
+		if (huffTree.symbol != null){
+			codeMap.put(code.toString(),huffTree.symbol);
+		} else {
+      
+			code.append(0);
+			codeMap = buildMap(codeMap, huffTree.left, code);
+			code.deleteCharAt(code.length()-1);
+			
+			code.append(1);
+			codeMap = buildMap(codeMap, huffTree.right, code);
+			code.deleteCharAt(code.length()-1);
+		}
+		
+		return codeMap;
+	}
+	
+// decodes main text using created codebook and writes bytes to file 
+	private void writeFile(File outfile, BinaryReader bitreader,HashMap<String, Character> codeMap){
+  StringBuilder code = new StringBuilder();
+		StringBuilder decoded = new StringBuilder();
+		int bit = bitreader.read();
+		do{
+			code.append(bit);
+			if (codeMap.containsKey(code.toString())){
+				decoded.append(codeMap.get(code.toString()));
+				code.setLength(0);
+			}
+			bit = bitreader.read();
+		}while(bit!=-1);
+  try {
+    byte [] b = new byte[decoded.length()];
+    for(int i = 0; i < decoded.length(); i++){
+      Integer myValue = Integer.valueOf((int)decoded.charAt(i));  
+      b[i] = (myValue.byteValue());
+    }
+    FileOutputStream outputStream = new FileOutputStream(outfile);
+    outputStream.write(b);
+		outputStream.close();
+	}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	
+}
+// special class for huffman tree, constructors for huffman tree 
+class HuffmanTree<Symbol> implements Comparable<HuffmanTree<Symbol>>{
+	
+	final Symbol symbol;
+	final Integer frequency;
+	final HuffmanTree<Symbol> left, right;
+	
+	HuffmanTree(Symbol symbol, Integer frequency){
+		this.symbol = symbol;
+		this.frequency = frequency;
+		this.left = null;
+		this.right = null;
+	}
+	
+	HuffmanTree(HuffmanTree<Symbol> left, HuffmanTree<Symbol> right){
+		symbol = null;
+		this.left = left;
+		this.right = right;
+		frequency = left.frequency + right.frequency;
+	}
+
+	public int compareTo(HuffmanTree<Symbol> tree ) {
+		return this.frequency - tree.frequency;
+	}
+	
+
+}
+// class which allows to write file byte by byte 
+class BinaryWriter {
+
+	private OutputStream output;
+	private int currentBit, theByte;
+	
+	public BinaryWriter(OutputStream out){
+		try{
+			output = out;
+			currentBit = 0;
+			theByte = 0;
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	public void write(int bit){
+		try{
+			if( (bit != 0 && bit != 1)){
+			   throw new IllegalArgumentException();
+			}
+			theByte = theByte << 1 | bit;
+			currentBit++;
+			if(currentBit == 8){
+				output.write(theByte);
+				currentBit = 0;
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	public void writeByte(String b){
+		try{
+			char[] bits = b.toCharArray();
+			if (bits.length > 8){
+				throw new IndexOutOfBoundsException();
+			}
+			for( int i=0; i<8-bits.length; i++){
+				write(0);
+			}
+			for( int i=0 ; i<bits.length ; i++){
+				write((int) (bits[i]-48)); //makes to ASCII table 
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	public void close(){
+		try{
+			while (currentBit != 0){
+				write(0);
+			}
+			output.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+}
+//class which allows to read file byte by byte 
+class BinaryReader {
+
+	private InputStream input;
+	private int currentBit, theByte;
+	
+	public BinaryReader(InputStream in){
+		try{
+			input = in;
+			currentBit = 0;
+			theByte = 0;
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+	}
+	
+	public int read(){
+		try{
+			if(currentBit == 8){
+				theByte = input.read();
+				if(theByte == -1){
+					return -1;
+				}
+				currentBit = 0;
+			}
+			currentBit++;
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return (theByte >>> (8-currentBit)) & 1;
+	}
+	
+	public int readByte(){
+		int result = 0;
+		int b;
+		try{
+			for(int i=7 ; i>=0 ; i--){
+				b = read();
+				if(b == -1){
+					break;
+				}
+
+				result+=b*Math.pow(2, i);
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return result;
+	}
 }
 // Edvards Bārtulis 
 class Gzip {
