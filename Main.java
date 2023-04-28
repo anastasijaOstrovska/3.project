@@ -6,31 +6,21 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Scanner;
 import java.io.InputStream;
-import java.math.BigInteger;
+import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.OutputStream;
-import java.util.Iterator;
-import java.util.Map.Entry;
+import java.io.OutputStreamWriter;
 import java.util.PriorityQueue;
-import java.io.FileInputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Stream;
-
 
 public class Main {
 
@@ -83,7 +73,7 @@ public class Main {
 	}
 
 	public static void comp(String sourceFile, String resultFile) throws IOException {
-		int method=1; 	// change to see different methods, 
+		int method=5; 	// change to see different methods, 
 						// change decomp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
@@ -96,32 +86,34 @@ public class Main {
     		File outfile = new File(resultFile);
 			Hf.Huffman_encoding(infile, outfile);
 		case 3: // Edvards Bārtulis - LZ77
+			String input = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
         	LZ77.writeToFile(compressed, resultFile);
 			break;
 		case 4: // LZ77 + Huffman
-			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
-        	LZ77.writeToFile(compressed, resultFile+".temporaryFile");
+			String input1 = LZ77.readFromFile(sourceFile);
+			ArrayList<LZ77.LZ77Token> compressed1 = LZ77.compress(input1);
+        	LZ77.writeToFile(compressed1, resultFile+".temporaryFile");
 
-			Huffman Hf = new Huffman();
-   			File infile = new File(resultFile+".temporaryFile");
-    		File outfile = new File(resultFile);
-			Hf.Huffman_encoding(infile, outfile);
+			Huffman Hf1 = new Huffman();
+   			File infile1 = new File(resultFile+".temporaryFile");
+    		File outfile1 = new File(resultFile);
+			Hf1.Huffman_encoding(infile1, outfile1);
 
 			File f = new File(resultFile+".temporaryFile");
 			f.delete();
 			break;
 		case 5: // LZSS + Huffman - the best!
-			LZSS lz= new LZSS(sourceFile,resultFile+".temporaryFile");
-			lz.compress();
+			LZSS lz1= new LZSS(sourceFile,resultFile+".temporaryFile");
+			lz1.compress();
 
-			Huffman Hf = new Huffman();
-   			File infile = new File(resultFile+".temporaryFile");
-    		File outfile = new File(resultFile);
-			Hf.Huffman_encoding(infile, outfile);
+			Huffman Hf2 = new Huffman();
+   			File infile2 = new File(resultFile+".temporaryFile");
+    		File outfile2 = new File(resultFile);
+			Hf2.Huffman_encoding(infile2, outfile2);
 
-			File f = new File(resultFile+".temporaryFile");
-			f.delete();
+			File f1 = new File(resultFile+".temporaryFile");
+			f1.delete();
 			break;
 		default:
 			System.out.println("wrong method");
@@ -129,7 +121,7 @@ public class Main {
 	}
 
 	public static void decomp(String sourceFile, String resultFile) throws IOException{
-		int method=1;	// change to see different methods, 
+		int method=5;	// change to see different methods, 
 						// change comp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
@@ -143,33 +135,35 @@ public class Main {
 			Hf.Huffman_decoding(infile, outfile);
 			break;
 		case 3: // Edvards Bārtulis - LZ77
-			Gzip gz= new Gzip(sourceFile,resultFile);
-			gz.mainGz("decomp");
+			ArrayList<LZ77.LZ77Token> compressedFromFile = LZ77.readCompressedFromFile(sourceFile);
+	        String decompressed = LZ77.decompress(compressedFromFile);
+	        
+	        LZ77.writeToDecompressedFile(decompressed, resultFile);
 			break;
 		case 4: // LZ77 + Huffman
-			Huffman Hf = new Huffman();
-   			File infile = new File(sourceFile);
-    		File outfile = new File(sourceFile+".temporaryFile");
-			Hf.Huffman_decoding(infile, outfile);
+			Huffman Hf1 = new Huffman();
+   			File infile1 = new File(sourceFile);
+    		File outfile1 = new File(sourceFile+".temporaryFile");
+			Hf1.Huffman_decoding(infile1, outfile1);
 
-			ArrayList<LZ77.LZ77Token> compressedFromFile = LZ77.readCompressedFromFile(sourceFile+".temporaryFile");
-        	String decompressed = LZ77.decompress(compressedFromFile);
-        	LZ77.writeToDecompressedFile(decompressed, resultFile);
+			ArrayList<LZ77.LZ77Token> compressedFromFile1 = LZ77.readCompressedFromFile(sourceFile+".temporaryFile");
+        	String decompressed1 = LZ77.decompress(compressedFromFile1);
+        	LZ77.writeToDecompressedFile(decompressed1, resultFile);
 
 			File f = new File(sourceFile+".temporaryFile");
 			f.delete();
 			break;
 		case 5: // LZSS + Huffman - the best!
-			Huffman Hf = new Huffman();
-   			File infile = new File(sourceFile);
-    		File outfile = new File(sourceFile+".temporaryFile");
-			Hf.Huffman_decoding(infile, outfile);
+			Huffman Hf2 = new Huffman();
+   			File infile2 = new File(sourceFile);
+    		File outfile2 = new File(sourceFile+".temporaryFile");
+			Hf2.Huffman_decoding(infile2, outfile2);
 
-			LZSS lz= new LZSS(sourceFile+".temporaryFile",resultFile);
-			lz.decompress();
+			LZSS lz1= new LZSS(sourceFile+".temporaryFile",resultFile);
+			lz1.decompress();
 
-			File f = new File(sourceFile+".temporaryFile");
-			f.delete();
+			File f1 = new File(sourceFile+".temporaryFile");
+			f1.delete();
 			break;
 		default:
 			System.out.println("wrong method");
@@ -479,9 +473,8 @@ class Huffman {
 	public Huffman(){eof = false;}
   
 // main function for compress 
-	public void Huffman_encoding(File f, File outfile){
+	public void Huffman_encoding(File infile, File outfile){
 		try{
-			File infile = f;
 			int[] chFreqs = countFrequency(infile);
 			HuffmanTree<Character> huffTree = buildTreeCoding(chFreqs);
 			HashMap<Character,String> codeMap = buildMapCoding(new HashMap<Character,String>(), huffTree, new StringBuilder());
@@ -512,6 +505,7 @@ class Huffman {
 // makes codebook by going throught huffman tree
   	private HashMap<Character, String> buildMapCoding(HashMap<Character,String> codeMap, HuffmanTree<Character> huffTree, StringBuilder code){
 		if (huffTree.symbol != null){
+      
 			codeMap.put(huffTree.symbol,code.toString());
 		} else {
 
@@ -519,7 +513,6 @@ class Huffman {
 			codeMap = buildMapCoding(codeMap, huffTree.left, code);
 			code.deleteCharAt(code.length()-1);
 			
-
 			code.append(1);
 			codeMap = buildMapCoding(codeMap, huffTree.right, code);
 			code.deleteCharAt(code.length()-1);
@@ -591,15 +584,16 @@ class Huffman {
 }
 
 // main function for decompression
-	public void Huffman_decoding(File f, File outfile){
+	public void Huffman_decoding(File infile, File outfile){
 		try{
-			File infile = f;
+      
 			BinaryReader bitreader = new BinaryReader( new FileInputStream(infile) );
 			bitreader.readByte();
 			HuffmanTree<Character> huffTree = buildTree(bitreader);
 			HashMap<String,Character> codeMap = buildMap(new HashMap<String,Character>(), huffTree, new StringBuilder());
 			bitreader.readByte(); bitreader.read();
 			writeFile(outfile, bitreader, codeMap);
+      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -620,12 +614,14 @@ class Huffman {
 						eof = true;
 					}
 				}else if (bit == 0){
+          
 					HuffmanTree<Character> leftTree = buildTree(bitreader);
 					HuffmanTree<Character> rightTree = buildTree(bitreader);
 					return new HuffmanTree<Character>(leftTree,rightTree);
 				}
-			}while(bit!=-1 && eof!=true);
+			}while(bit != -1 && eof != true);
 		}catch(Exception e){
+      
 			e.printStackTrace();
 		}
 		return new HuffmanTree<Character>((char) 0,0);
@@ -665,8 +661,8 @@ class Huffman {
   try {
     byte [] b = new byte[decoded.length()];
     for(int i = 0; i < decoded.length(); i++){
-      Integer myValue = Integer.valueOf((int)decoded.charAt(i));  
-      b[i] = (myValue.byteValue());
+      Integer myVal = Integer.valueOf((int)decoded.charAt(i));  
+      b[i] = (myVal.byteValue());
     }
     FileOutputStream outputStream = new FileOutputStream(outfile);
     outputStream.write(b);
@@ -713,9 +709,11 @@ class BinaryWriter {
 	
 	public BinaryWriter(OutputStream out){
 		try{
+      
 			output = out;
 			currentBit = 0;
 			theByte = 0;
+      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -726,12 +724,15 @@ class BinaryWriter {
 			if( (bit != 0 && bit != 1)){
 			   throw new IllegalArgumentException();
 			}
+      
 			theByte = theByte << 1 | bit;
 			currentBit++;
+      
 			if(currentBit == 8){
 				output.write(theByte);
 				currentBit = 0;
 			}
+      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -759,6 +760,7 @@ class BinaryWriter {
 			while (currentBit != 0){
 				write(0);
 			}
+      
 			output.close();
 		}catch(Exception e){
 			e.printStackTrace();
@@ -769,13 +771,13 @@ class BinaryWriter {
 class BinaryReader {
 
 	private InputStream input;
-	private int currentBit, theByte;
+	private int currentBit, curByte;
 	
 	public BinaryReader(InputStream in){
 		try{
 			input = in;
 			currentBit = 0;
-			theByte = 0;
+			curByte = 0;
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -784,8 +786,8 @@ class BinaryReader {
 	public int read(){
 		try{
 			if(currentBit == 8){
-				theByte = input.read();
-				if(theByte == -1){
+				curByte = input.read();
+				if(curByte == -1){
 					return -1;
 				}
 				currentBit = 0;
@@ -794,7 +796,7 @@ class BinaryReader {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		return (theByte >>> (8-currentBit)) & 1;
+		return (curByte >>> (8-currentBit)) & 1;
 	}
 	
 	public int readByte(){
