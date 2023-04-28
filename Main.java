@@ -73,9 +73,10 @@ public class Main {
 			lz.compress();
 			break;
 		case 2:
-			Huffman Hf = new Huffman(sourceFile,resultFile);
-			Hf.Huffman_comp();
-			break;
+			Huffman Hf = new Huffman();
+   			File infile = new File(sourceFile);
+    			File outfile = new File(resultFile);
+			Hf.Huffman_encoding(infile, outfile);
 		case 3:
 			Gzip gz= new Gzip(sourceFile,resultFile);
 			gz.mainGz("comp");
@@ -94,8 +95,10 @@ public class Main {
 			lz.decompress();
 			break;
 		case 2:
-			Huffman Hf = new Huffman(sourceFile,resultFile);
-			Hf.Huffman_decomp();
+			Huffman Hf = new Huffman();
+    			File infile = new File(sourceFile);
+    			File outfile = new File(resultFile);
+			Hf.Huffman_decoding(infile, outfile);
 			break;
 		case 3:
 			Gzip gz= new Gzip(sourceFile,resultFile);
