@@ -4,6 +4,7 @@
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -65,11 +66,10 @@ public class Main {
 	}
 
 	public static void comp(String sourceFile, String resultFile) {
-		// TODO: implement this method
 		int method=1;
 		switch (method){
 		case 1:
-			LZ77 lz= new LZ77(sourceFile,resultFile);
+			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.compress();
 			break;
 		case 2:
@@ -87,11 +87,10 @@ public class Main {
 	}
 
 	public static void decomp(String sourceFile, String resultFile) {
-		// TODO: implement this method
 		int method=1;
 		switch (method){
 		case 1:
-			LZ77 lz= new LZ77(sourceFile,resultFile);
+			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.decompress();
 			break;
 		case 2:
@@ -162,39 +161,252 @@ public class Main {
 	}
 }
 // Anželika Krasiļņikova
-class LZ77{
+class LZSS{
 	private String sourceFile, resultFile;
-	private int searchBufferSize=1000;
-	
-	public LZ77(String sf, String rf) {
-		// inicializē LZ77 algoritmu
-		String sourceFile=sf;
-		String resultFile=rf;
-		System.out.println("lz77 inicializācija");
+	private int bufferSize1,bufferSize2;
+	byte[] buffer1, buffer2;
+    
+	public LZSS(String sfile, String rfile) {
+		sourceFile=sfile;
+		resultFile=rfile;
+		bufferSize1=4096;
+        	bufferSize2=4096;
+		//System.out.println("lz77 inicializācija");
+		
 	}
-	public void compress() {
-		// saspež failu
+	public void compress() throws IOException{
 		System.out.println("saspiešana");
+		FileInputStream input;
+		try {		
+			input = new FileInputStream(this.sourceFile);
 		
-		// meklē atkārtojumus un aizvieto tos ar atsaucēm
-		byte[] b= {0,0};
-		findMatch(b,0);
+		}catch(FileNotFoundException ex){
+			System.out.println("File does not exist");
+	        	return;
+	    	}
+		// modificē bufera lielumu, ja fails ir mazāks 
+		this.bufferSize1 = Math.min(this.bufferSize1,input.available()/2+input.available()%2);
+        if (bufferSize1<bufferSize2) this.bufferSize2 = this.bufferSize1-input.available()%2;
+		this.buffer1 = new byte[this.bufferSize1];
+		// nolasa pirmos datus
+        	input.read(this.buffer1);
+        	this.buffer2 = new byte[this.bufferSize2];
+        	input.read(this.buffer2);
+        
+		FileOutputStream output = new FileOutputStream(this.resultFile);
+		byte[] outbuf = new byte[32]; //izvades buferis
+        
+	 	
+		byte outIndex=0; // izseko izvades bufera poziciju
+		byte flag=0; // izseko karogus (atsauce vai vienkaršs baits)
+		byte flagIndex=0; // skaita baitus lidz 8, lai pievenotu karogus
+		int position=0; // tagadeja saspiešanas pozicija 
+        
+		while (true) {
+            	// meklē atkartojumus 
+			byte[] pointer = findMatch(position);
+            
+			if (pointer==null) {
+                // ja atkartojumu nav, pievieno 1 simbolu
+				outbuf[outIndex]=bufferGet(position);
+				outIndex++;
+				flagIndex++;
+				position++;
+                
+			} else {
+				// ja atkartojums ir atrasts, pievieno atsauci (length; distance)
+				for (byte b:pointer) {
+					outbuf[outIndex]=b;
+					outIndex++;
+				}
+				flagIndex++;
+				flag |= 1<<(8-flagIndex); // piešķir vieninieku bitam taja pozicija kur jābut atsauce
+				
+				if (pointer.length>2){ // ja atsauce sastav no vairāk nekā 2 baitiem
+					position += (pointer[0] & 127)<<8 | (pointer[1] & 0xFF); // iegūt  length vērtību
+					//System.out.println(position);
+				} else position += pointer[0] & 0xFF; 
+				
+			}
+			
+			if (flagIndex==8) {
+				// kad karoga baits ir aizpildīts, izvada to un saglabāto izvades buferi 
+				output.write(flag);
+				output.write(outbuf,0,outIndex);
+                
+				flag=0;
+				outIndex=0;
+				flagIndex=0;
+			}
+			
+			if (position>this.bufferSize1*1.5 && input.available()!=0){
+				// kad saspieāšanas pozicija parsniedz bufera x1.5 lielumu,
+				// pirmais buferis tiek saglabāts, un nolasīta jauna informācija otrā buferī
+				position-=this.bufferSize1;
+				this.buffer1=this.buffer2;
+				if (input.available() < this.bufferSize2){ // ja atlikušais lielums parāk mazs
+					this.bufferSize2 = input.available();
+				}
+				this.buffer2 = new byte[this.bufferSize2];
+				input.read(this.buffer2);
+				//System.out.println("left: "+input.available());
+            		}
+            
+			if((position >= this.bufferSize1+this.bufferSize2) && input.available()==0) break;
+		}
+        
+		if (flagIndex>0) { // pievieno atlikušus baitus
+            		output.write(flag);
+			output.write(outbuf,0,outIndex);
+		}
+        
+		input.close();
+		output.close();
+		System.out.println("done");
 	}
 	
-	public void decompress() {
-		// veic faila decompresiju
+	public void decompress() throws IOException {
 		System.out.println("dekompresija");
-	}
-	private byte[] findMatch (byte[] buffer, int startPosition) {
-		// meklē garāko atkārtojumu un atgriež atsauci uz to
-		System.out.println("meklē garāko atkārtojumu");
+		FileInputStream input;
+		try {
+			input = new FileInputStream(this.sourceFile);
+		}catch(FileNotFoundException ex){
+	        	System.out.println("File does not exist");
+	        	return;
+	    	}
 		
-		boolean matched = true;
-		// ja atkārtojums netika atrasts atgriež 'null'
-		if (!matched) return null; 
-		else {
-			byte[] b= {0,0};
-			return b;
+
+		FileOutputStream output = new FileOutputStream(this.resultFile);
+
+		this.bufferSize1=this.bufferSize1*2; //palielinā uzmeru izmēru lai parliecinatos, ka 
+		this.bufferSize2=this.bufferSize1;
+		this.buffer1 = new byte[this.bufferSize1]; 
+        	this.buffer2 = new byte[this.bufferSize2];
+        
+		int outIndex=0; // izseko izvades bufera poziciju
+		byte flagIndex=1; // izseko karogu pozīciju
+		byte flag=(byte)input.read(); // izseko karogus (atsauce vai vienkaršs baits)
+		int distance = 0;
+		int length = 0;
+        
+
+		while (true) {
+			
+			if ((flag & 1<<(8-flagIndex)) > 0) {
+				// ja karoga bits sakrīt ar 1, nolasa atsauci
+				length = input.read();
+				if ((length & 1<<7) >0){ // ja pirmais bits ir 1, kopējais atsauces izmērs ir 4 baiti.
+					// nolasa un atgriež int vertību
+					length &= 127; 
+					length = length<<8 | input.read();
+					distance = input.read();
+					distance = distance<<8 | input.read();
+					
+				} else distance = input.read();
+				
+				for (int i=0;i<length;i++) {
+					// kopē baitus uz kuriem norāda atsauce
+				    	if (outIndex<this.bufferSize1){
+    				    		this.buffer1[outIndex]=this.buffer1[outIndex-distance];
+                    			} else {
+                        			this.buffer2[outIndex-this.bufferSize1]=bufferGet(outIndex-distance);
+                    			}
+					outIndex++;
+				}
+				
+			}else {
+                		if (outIndex<this.bufferSize1){
+				 	this.buffer1[outIndex]=(byte)input.read();
+                		} else {
+                    			this.buffer2[outIndex-this.bufferSize1]=(byte) input.read();
+                		}
+				outIndex++;
+			}
+			flagIndex++;
+			
+			
+			if (flagIndex>8) {
+				// nolasa jaunu karogu
+				flag=(byte)input.read();
+				flagIndex=1;
+			}
+
+            		if (outIndex>this.bufferSize1*1.5 && input.available()!=0){
+				// kad izvades pozicija parsniedz bufera x1.5 lielumu,
+				// pirmais buferis tiek saglabāts un atbrivots otrais
+				outIndex-=this.bufferSize1;
+				output.write(buffer1);
+				this.buffer1=this.buffer2;
+				this.buffer2 = new byte[this.bufferSize2];
+				//System.out.println(input.available());
+            		}
+            
+			if(input.available()==0) break;
+
+		}
+		if (outIndex<this.bufferSize1){ // izvāda atlikušus baitus
+            		output.write(buffer1,0,outIndex);
+		} else{
+		    	output.write(buffer1);
+		    	output.write(buffer2,0,outIndex-this.bufferSize1);
+		}
+		
+		input.close();
+		output.close();
+		System.out.println("done");
+	}
+	private byte bufferGet (int pos) {
+		// palīdz izsekot buferus 
+		// atgriež vertību no pirmā vai otrā bufera
+		if (pos>=this.bufferSize1) {
+			return this.buffer2[pos-this.bufferSize1];
+		} else return this.buffer1[pos];
+    	}
+    
+	private byte[] findMatch (int startPosition) {
+		// atgriež atkartojuma atsauci
+		
+		int maxDistance = 0;
+		int maxLength = 0;
+        	int bufferSize = this.bufferSize1+this.bufferSize2-1;
+        
+		// meklē  garāko atkartojumu
+		for (int i = 0; i < startPosition; i++) {
+		    	int length = 0;
+		    	// iegūt atkartojuma garumu
+		    	while (startPosition + length < bufferSize && bufferGet(startPosition + length) == bufferGet(i + length) ) {
+				length++;
+				//System.out.println(i+" "+length+" "+ buffer[startPosition + length]+"=" + buffer[i + length] );
+		    	}
+		    	if (length >= maxLength && length>=3) {
+				maxLength = length;
+				maxDistance = startPosition - i;
+		    	}
+		}
+	
+		if (maxLength==0) {
+			return null; // atgriež null, ja garums ir mazāks par 3
+		} else {
+			byte[] pointer;
+			if (maxLength>127 || maxDistance>255) {
+				// ja vērtība ir parāk liela, ieraksta skaitļus divos baitos
+				if (maxLength<=4) {
+					return null; //ja atkartota virkne ir mazāka par iegūto atsauci, neaizvieto to
+				}
+				pointer = new byte[4];
+				pointer[0] = (byte) ((maxLength & 0x0000FF00) >> 8);
+				pointer[1] = (byte) ((maxLength & 0x000000FF) >> 0);
+				pointer[2] = (byte) ((maxDistance & 0x0000FF00) >> 8);
+				pointer[3] = (byte) ((maxDistance & 0x000000FF) >> 0);
+				
+				pointer[0]=(byte) (pointer[0] | 1<<7); // piešķir pirmām bitam "1" vertību, kas norāda atsauces baitu garumu 
+			} else {
+				pointer = new byte[2];
+				pointer[0]=(byte)maxLength;
+				pointer[1]=(byte)maxDistance;
+			}
+			//System.out.println(maxDistance+" "+maxLength);
+			return pointer;
 		}
 	}
 }
