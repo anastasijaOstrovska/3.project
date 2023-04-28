@@ -479,8 +479,9 @@ class Huffman {
 	public Huffman(){eof = false;}
   
 // main function for compress 
-	public void Huffman_encoding(File infile, File outfile){
+	public void Huffman_encoding(File f, File outfile){
 		try{
+			File infile = f;
 			int[] chFreqs = countFrequency(infile);
 			HuffmanTree<Character> huffTree = buildTreeCoding(chFreqs);
 			HashMap<Character,String> codeMap = buildMapCoding(new HashMap<Character,String>(), huffTree, new StringBuilder());
@@ -511,7 +512,6 @@ class Huffman {
 // makes codebook by going throught huffman tree
   	private HashMap<Character, String> buildMapCoding(HashMap<Character,String> codeMap, HuffmanTree<Character> huffTree, StringBuilder code){
 		if (huffTree.symbol != null){
-      
 			codeMap.put(huffTree.symbol,code.toString());
 		} else {
 
@@ -519,6 +519,7 @@ class Huffman {
 			codeMap = buildMapCoding(codeMap, huffTree.left, code);
 			code.deleteCharAt(code.length()-1);
 			
+
 			code.append(1);
 			codeMap = buildMapCoding(codeMap, huffTree.right, code);
 			code.deleteCharAt(code.length()-1);
@@ -590,16 +591,15 @@ class Huffman {
 }
 
 // main function for decompression
-	public void Huffman_decoding(File infile, File outfile){
+	public void Huffman_decoding(File f, File outfile){
 		try{
-      
+			File infile = f;
 			BinaryReader bitreader = new BinaryReader( new FileInputStream(infile) );
 			bitreader.readByte();
 			HuffmanTree<Character> huffTree = buildTree(bitreader);
 			HashMap<String,Character> codeMap = buildMap(new HashMap<String,Character>(), huffTree, new StringBuilder());
 			bitreader.readByte(); bitreader.read();
 			writeFile(outfile, bitreader, codeMap);
-      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -620,14 +620,12 @@ class Huffman {
 						eof = true;
 					}
 				}else if (bit == 0){
-          
 					HuffmanTree<Character> leftTree = buildTree(bitreader);
 					HuffmanTree<Character> rightTree = buildTree(bitreader);
 					return new HuffmanTree<Character>(leftTree,rightTree);
 				}
-			}while(bit != -1 && eof != true);
+			}while(bit!=-1 && eof!=true);
 		}catch(Exception e){
-      
 			e.printStackTrace();
 		}
 		return new HuffmanTree<Character>((char) 0,0);
@@ -667,8 +665,8 @@ class Huffman {
   try {
     byte [] b = new byte[decoded.length()];
     for(int i = 0; i < decoded.length(); i++){
-      Integer myVal = Integer.valueOf((int)decoded.charAt(i));  
-      b[i] = (myVal.byteValue());
+      Integer myValue = Integer.valueOf((int)decoded.charAt(i));  
+      b[i] = (myValue.byteValue());
     }
     FileOutputStream outputStream = new FileOutputStream(outfile);
     outputStream.write(b);
@@ -715,11 +713,9 @@ class BinaryWriter {
 	
 	public BinaryWriter(OutputStream out){
 		try{
-      
 			output = out;
 			currentBit = 0;
 			theByte = 0;
-      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -730,15 +726,12 @@ class BinaryWriter {
 			if( (bit != 0 && bit != 1)){
 			   throw new IllegalArgumentException();
 			}
-      
 			theByte = theByte << 1 | bit;
 			currentBit++;
-      
 			if(currentBit == 8){
 				output.write(theByte);
 				currentBit = 0;
 			}
-      
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -766,7 +759,6 @@ class BinaryWriter {
 			while (currentBit != 0){
 				write(0);
 			}
-      
 			output.close();
 		}catch(Exception e){
 			e.printStackTrace();
@@ -777,13 +769,13 @@ class BinaryWriter {
 class BinaryReader {
 
 	private InputStream input;
-	private int currentBit, curByte;
+	private int currentBit, theByte;
 	
 	public BinaryReader(InputStream in){
 		try{
 			input = in;
 			currentBit = 0;
-			curByte = 0;
+			theByte = 0;
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -792,8 +784,8 @@ class BinaryReader {
 	public int read(){
 		try{
 			if(currentBit == 8){
-				curByte = input.read();
-				if(curByte == -1){
+				theByte = input.read();
+				if(theByte == -1){
 					return -1;
 				}
 				currentBit = 0;
@@ -802,7 +794,7 @@ class BinaryReader {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		return (curByte >>> (8-currentBit)) & 1;
+		return (theByte >>> (8-currentBit)) & 1;
 	}
 	
 	public int readByte(){
