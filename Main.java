@@ -73,28 +73,24 @@ public class Main {
 	}
 
 	public static void comp(String sourceFile, String resultFile) throws IOException {
-		int method=5; 	// change to see different methods, 
+		int method=4; 	// change to see different methods, 
 						// change decomp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
 			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.compress();
 			break;
-		case 2: // Anastasija Ostrovska - Huffman
-			Huffman Hf = new Huffman();
-   			File infile = new File(sourceFile);
-    		File outfile = new File(resultFile);
-			Hf.Huffman_encoding(infile, outfile);
-		case 3: // Edvards Bārtulis - LZ77
+		case 2: // Edvards Bārtulis - LZ77
 			String input = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
         	LZ77.writeToFile(compressed, resultFile);
 			break;
-		case 4: // LZ77 + Huffman
+		case 3: // LZ77 + Huffman
 			String input1 = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed1 = LZ77.compress(input1);
         	LZ77.writeToFile(compressed1, resultFile+".temporaryFile");
-
+        	
+        	// Anastasija Ostrovska - Huffman
 			Huffman Hf1 = new Huffman();
    			File infile1 = new File(resultFile+".temporaryFile");
     		File outfile1 = new File(resultFile);
@@ -103,10 +99,11 @@ public class Main {
 			File f = new File(resultFile+".temporaryFile");
 			f.delete();
 			break;
-		case 5: // LZSS + Huffman - the best!
+		case 4: // LZSS + Huffman - the best!
 			LZSS lz1= new LZSS(sourceFile,resultFile+".temporaryFile");
 			lz1.compress();
-
+			
+			// Anastasija Ostrovska - Huffman
 			Huffman Hf2 = new Huffman();
    			File infile2 = new File(resultFile+".temporaryFile");
     		File outfile2 = new File(resultFile);
@@ -121,26 +118,21 @@ public class Main {
 	}
 
 	public static void decomp(String sourceFile, String resultFile) throws IOException{
-		int method=5;	// change to see different methods, 
+		int method=4;	// change to see different methods, 
 						// change comp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
 			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.decompress();
 			break;
-		case 2: // Anastasija Ostrovska - Huffman
-			Huffman Hf = new Huffman();
-    		File infile = new File(sourceFile);
-    		File outfile = new File(resultFile);
-			Hf.Huffman_decoding(infile, outfile);
-			break;
-		case 3: // Edvards Bārtulis - LZ77
+		case 2: // Edvards Bārtulis - LZ77
 			ArrayList<LZ77.LZ77Token> compressedFromFile = LZ77.readCompressedFromFile(sourceFile);
 	        String decompressed = LZ77.decompress(compressedFromFile);
 	        
 	        LZ77.writeToDecompressedFile(decompressed, resultFile);
 			break;
-		case 4: // LZ77 + Huffman
+		case 3: // LZ77 + Huffman
+			// Anastasija Ostrovska - Huffman
 			Huffman Hf1 = new Huffman();
    			File infile1 = new File(sourceFile);
     		File outfile1 = new File(sourceFile+".temporaryFile");
@@ -153,7 +145,8 @@ public class Main {
 			File f = new File(sourceFile+".temporaryFile");
 			f.delete();
 			break;
-		case 5: // LZSS + Huffman - the best!
+		case 4: // LZSS + Huffman - the best!
+			// Anastasija Ostrovska - Huffman
 			Huffman Hf2 = new Huffman();
    			File infile2 = new File(sourceFile);
     		File outfile2 = new File(sourceFile+".temporaryFile");
@@ -337,7 +330,7 @@ class LZSS{
 
 		FileOutputStream output = new FileOutputStream(this.resultFile);
 
-		this.bufferSize1=this.bufferSize1*2; //palielinā uzmeru izmēru lai parliecinatos, ka 
+		this.bufferSize1=this.bufferSize1*2; //palielinā izmēru lai parliecinatos, ka vieta uz kuru norāda atsauce būs atrasta 
 		this.bufferSize2=this.bufferSize1;
 		this.buffer1 = new byte[this.bufferSize1]; 
         this.buffer2 = new byte[this.bufferSize2];
@@ -361,6 +354,13 @@ class LZSS{
 					distance = distance<<8 | input.read();
 					
 				} else distance = input.read();
+				
+				if(distance>outIndex) {
+					System.out.println("wrong file format");
+					input.close();
+					output.close();
+					return;
+				}
 				
 				for (int i=0;i<length;i++) {
 					// kopē baitus uz kuriem norāda atsauce
