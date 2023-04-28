@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 public class Main {
 
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException{
 		Scanner sc = new Scanner(System.in);
 		String choiseStr;
 		String sourceFile, resultFile, firstFile, secondFile;
@@ -82,43 +82,94 @@ public class Main {
 		sc.close();
 	}
 
-	public static void comp(String sourceFile, String resultFile) {
-		int method=1;
+	public static void comp(String sourceFile, String resultFile) throws IOException {
+		int method=1; 	// change to see different methods, 
+						// change decomp too! 
 		switch (method){
-		case 1:
+		case 1: // Anželika Krasiļņikova - LZSS
 			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.compress();
 			break;
-		case 2:
+		case 2: // Anastasija Ostrovska - Huffman
 			Huffman Hf = new Huffman();
    			File infile = new File(sourceFile);
-    			File outfile = new File(resultFile);
+    		File outfile = new File(resultFile);
 			Hf.Huffman_encoding(infile, outfile);
-		case 3:
-			Gzip gz= new Gzip(sourceFile,resultFile);
-			gz.mainGz("comp");
+		case 3: // Edvards Bārtulis - LZ77
+			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
+        	LZ77.writeToFile(compressed, resultFile);
+			break;
+		case 4: // LZ77 + Huffman
+			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
+        	LZ77.writeToFile(compressed, resultFile+".temporaryFile");
+
+			Huffman Hf = new Huffman();
+   			File infile = new File(resultFile+".temporaryFile");
+    		File outfile = new File(resultFile);
+			Hf.Huffman_encoding(infile, outfile);
+
+			File f = new File(resultFile+".temporaryFile");
+			f.delete();
+			break;
+		case 5: // LZSS + Huffman - the best!
+			LZSS lz= new LZSS(sourceFile,resultFile+".temporaryFile");
+			lz.compress();
+
+			Huffman Hf = new Huffman();
+   			File infile = new File(resultFile+".temporaryFile");
+    		File outfile = new File(resultFile);
+			Hf.Huffman_encoding(infile, outfile);
+
+			File f = new File(resultFile+".temporaryFile");
+			f.delete();
 			break;
 		default:
 			System.out.println("wrong method");
 		}
 	}
 
-	public static void decomp(String sourceFile, String resultFile) {
-		int method=1;
+	public static void decomp(String sourceFile, String resultFile) throws IOException{
+		int method=1;	// change to see different methods, 
+						// change comp too! 
 		switch (method){
-		case 1:
+		case 1: // Anželika Krasiļņikova - LZSS
 			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.decompress();
 			break;
-		case 2:
+		case 2: // Anastasija Ostrovska - Huffman
 			Huffman Hf = new Huffman();
-    			File infile = new File(sourceFile);
-    			File outfile = new File(resultFile);
+    		File infile = new File(sourceFile);
+    		File outfile = new File(resultFile);
 			Hf.Huffman_decoding(infile, outfile);
 			break;
-		case 3:
+		case 3: // Edvards Bārtulis - LZ77
 			Gzip gz= new Gzip(sourceFile,resultFile);
 			gz.mainGz("decomp");
+			break;
+		case 4: // LZ77 + Huffman
+			Huffman Hf = new Huffman();
+   			File infile = new File(sourceFile);
+    		File outfile = new File(sourceFile+".temporaryFile");
+			Hf.Huffman_decoding(infile, outfile);
+
+			ArrayList<LZ77.LZ77Token> compressedFromFile = LZ77.readCompressedFromFile(sourceFile+".temporaryFile");
+        	String decompressed = LZ77.decompress(compressedFromFile);
+        	LZ77.writeToDecompressedFile(decompressed, resultFile);
+
+			File f = new File(sourceFile+".temporaryFile");
+			f.delete();
+			break;
+		case 5: // LZSS + Huffman - the best!
+			Huffman Hf = new Huffman();
+   			File infile = new File(sourceFile);
+    		File outfile = new File(sourceFile+".temporaryFile");
+			Hf.Huffman_decoding(infile, outfile);
+
+			LZSS lz= new LZSS(sourceFile+".temporaryFile",resultFile);
+			lz.decompress();
+
+			File f = new File(sourceFile+".temporaryFile");
+			f.delete();
 			break;
 		default:
 			System.out.println("wrong method");
@@ -187,7 +238,7 @@ class LZSS{
 		sourceFile=sfile;
 		resultFile=rfile;
 		bufferSize1=4096;
-        	bufferSize2=4096;
+        bufferSize2=4096;
 		//System.out.println("lz77 inicializācija");
 		
 	}
@@ -199,16 +250,16 @@ class LZSS{
 		
 		}catch(FileNotFoundException ex){
 			System.out.println("File does not exist");
-	        	return;
-	    	}
+	        return;
+	    }
 		// modificē bufera lielumu, ja fails ir mazāks 
 		this.bufferSize1 = Math.min(this.bufferSize1,input.available()/2+input.available()%2);
-        	if (bufferSize1<bufferSize2) this.bufferSize2 = this.bufferSize1-input.available()%2;
+        if (bufferSize1<bufferSize2) this.bufferSize2 = this.bufferSize1-input.available()%2;
 		this.buffer1 = new byte[this.bufferSize1];
 		// nolasa pirmos datus
-        	input.read(this.buffer1);
-        	this.buffer2 = new byte[this.bufferSize2];
-        	input.read(this.buffer2);
+        input.read(this.buffer1);
+        this.buffer2 = new byte[this.bufferSize2];
+        input.read(this.buffer2);
         
 		FileOutputStream output = new FileOutputStream(this.resultFile);
 		byte[] outbuf = new byte[32]; //izvades buferis
@@ -220,7 +271,7 @@ class LZSS{
 		int position=0; // tagadeja saspiešanas pozicija 
         
 		while (true) {
-            	// meklē atkartojumus 
+            // meklē atkartojumus 
 			byte[] pointer = findMatch(position);
             
 			if (pointer==null) {
@@ -285,9 +336,9 @@ class LZSS{
 		try {
 			input = new FileInputStream(this.sourceFile);
 		}catch(FileNotFoundException ex){
-	        	System.out.println("File does not exist");
-	        	return;
-	    	}
+	        System.out.println("File does not exist");
+	        return;
+	    }
 		
 
 		FileOutputStream output = new FileOutputStream(this.resultFile);
@@ -295,7 +346,7 @@ class LZSS{
 		this.bufferSize1=this.bufferSize1*2; //palielinā uzmeru izmēru lai parliecinatos, ka 
 		this.bufferSize2=this.bufferSize1;
 		this.buffer1 = new byte[this.bufferSize1]; 
-        	this.buffer2 = new byte[this.bufferSize2];
+        this.buffer2 = new byte[this.bufferSize2];
         
 		int outIndex=0; // izseko izvades bufera poziciju
 		byte flagIndex=1; // izseko karogu pozīciju
@@ -320,19 +371,19 @@ class LZSS{
 				for (int i=0;i<length;i++) {
 					// kopē baitus uz kuriem norāda atsauce
 				    	if (outIndex<this.bufferSize1){
-    				    		this.buffer1[outIndex]=this.buffer1[outIndex-distance];
-                    			} else {
-                        			this.buffer2[outIndex-this.bufferSize1]=bufferGet(outIndex-distance);
-                    			}
+    				    	this.buffer1[outIndex]=this.buffer1[outIndex-distance];
+                    		} else {
+                        		this.buffer2[outIndex-this.bufferSize1]=bufferGet(outIndex-distance);
+                    		}
 					outIndex++;
 				}
 				
 			}else {
-                		if (outIndex<this.bufferSize1){
+                if (outIndex<this.bufferSize1){
 				 	this.buffer1[outIndex]=(byte)input.read();
-                		} else {
-                    			this.buffer2[outIndex-this.bufferSize1]=(byte) input.read();
-                		}
+                } else {
+                    this.buffer2[outIndex-this.bufferSize1]=(byte) input.read();
+                }
 				outIndex++;
 			}
 			flagIndex++;
@@ -344,15 +395,15 @@ class LZSS{
 				flagIndex=1;
 			}
 
-            		if (outIndex>this.bufferSize1*1.5 && input.available()!=0){
-				// kad izvades pozicija parsniedz bufera x1.5 lielumu,
-				// pirmais buferis tiek saglabāts un atbrivots otrais
-				outIndex-=this.bufferSize1;
-				output.write(buffer1);
-				this.buffer1=this.buffer2;
-				this.buffer2 = new byte[this.bufferSize2];
-				//System.out.println(input.available());
-            		}
+            	if (outIndex>this.bufferSize1*1.5 && input.available()!=0){
+					// kad izvades pozicija parsniedz bufera x1.5 lielumu,
+					// pirmais buferis tiek saglabāts un atbrivots otrais
+					outIndex-=this.bufferSize1;
+					output.write(buffer1);
+					this.buffer1=this.buffer2;
+					this.buffer2 = new byte[this.bufferSize2];
+					//System.out.println(input.available());
+            	}
             
 			if(input.available()==0) break;
 
@@ -374,7 +425,7 @@ class LZSS{
 		if (pos>=this.bufferSize1) {
 			return this.buffer2[pos-this.bufferSize1];
 		} else return this.buffer1[pos];
-    	}
+    }
     
 	private byte[] findMatch (int startPosition) {
 		// atgriež atkartojuma atsauci
@@ -765,124 +816,152 @@ class BinaryReader {
 	}
 }
 // Edvards Bārtulis 
-class Gzip {
-	public static String inputFile, outputFile;
-	
-	public Gzip(String inp, String out) {
-		String inputFile = inp;
-		String outputFile = out;
-		System.out.println("Gzip");
-	}
-    	public static void mainGz(String command) {
+class LZ77 {
+    
+    private static final int DICTIONARY_BUFFER_SIZE = 255;
+    private static final int MAX_MATCH_LENGTH = 255;
+    
         
-        switch(command){
-	        case "comp":
-	        	// izsauc failu kompresiju
-			try {
-			        GzipLZ77Compression.compress(inputFile);
-			} catch (IOException e) {
-				System.out.println("Error compressing file: " + e.getMessage());
-			}
-			try {
-			        GzipHuffmanCompression.compress(inputFile+".lz77", outputFile);
-			        System.out.println("File compressed successfully.");
-			} catch (IOException e) {
-			        e.printStackTrace();
-			        System.out.println("Error compressing file: " + e.getMessage());
-			}
-			break;
-	        case "decomp":
-			// izsauc failu dekompresiju
-			try {
-				GzipLZ77Compression.decompress(inputFile);
-				    
-			} catch (IOException e) {
-				System.out.println("Error decompressing file: " + e.getMessage());
-			}
-		        try {
-			       GzipHuffmanCompression.decompress(inputFile+".lz77", outputFile);
-			       System.out.println("File decompressed successfully.");
-			} catch (IOException e) {
-			        e.printStackTrace();
-			       System.out.println("Error decompressing file: " + e.getMessage());
-			}
-			break;
-		default:
-		    	System.out.println("wrong command");
+    public static String readFromFile(String filename) {
+        StringBuilder result = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filename), "UTF-8"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading from file: " + e.getMessage());
+        }
+        return result.toString();
+    }
+
+
+    
+    public static void writeToFile(ArrayList<LZ77Token> compressed, String filename) {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename))) {
+            for (LZ77Token token : compressed) {
+                dos.writeByte(token.getIndex());
+                dos.writeByte(Math.min(token.getLength(), MAX_MATCH_LENGTH));
+                dos.write(new String(new char[]{token.getCharacter()}).getBytes("UTF-16BE"));
+
+
+            }
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
         }
     }
-	    
-}
-class GzipLZ77Compression {
-    private static final int WINDOW_SIZE=4096; 
-    private static final int LOOKAHEAD_SIZE=15;
-
-    public static void compress(String inputFile) throws IOException {
-	    // saspiež failu izmantojot LZ77 algoritmu
-	    System.out.println("LZ77Compression");
-    }
-    public static void decompress(String inputFile) throws IOException {
-	    // dekomprese failu, aizvietojot atsauces ar datu kopijām no faila
-	    System.out.println("LZ77Decompression");
-    }
-}
-
-class GzipHuffmanCompression {
-    private static final int EOF=0;
-    private static final int MAX_BITS=0; 
-
-
-    private static class Node implements Comparable<Node> {
-	    // palīgklase, kas satur informāciju par simbolu, tā frekvenci ievades datu straumē 
-	    // un saites uz kreiso un labo atvasi Hafmena kokā.
-
-
-	    private static Node buildHuffmanTree(int[] freq) {
-		    // veido Huffman koku
-		    System.out.println("Huffman Tree created");
-		    return null;
-	    }
-
-	    private static String[] buildCodeTable(Node root) {
-		    // veido kodu tabulu 
-		    System.out.println("Huffman table created");
-		    return null;
-	    }
-
-		@Override
-		public int compareTo(GzipHuffmanCompression.Node o) {
-			// TODO Auto-generated method stub
-			return 0;
-		}
+    public static void writeToDecompressedFile(String output, String filename) {
+        try (Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filename), "UTF-8"))) {
+            writer.write(output);
+        } catch (IOException e) {
+            System.out.println("Error writing to file: " + e.getMessage());
+        }
     }
 
-    private static void buildCodeTableHelper(Node node, String code, String[] codeTable) {
-	    // palīgfunkcija funkcijai buildCodeTable
-	    System.out.println("HuffmanTableHelper");
+    public static ArrayList<LZ77Token> readCompressedFromFile(String filename) {
+        ArrayList<LZ77Token> result = new ArrayList<LZ77Token>();
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(filename))) {
+            while (dis.available() > 0) {
+                int b1 = dis.readUnsignedByte();
+                int b2 = dis.readUnsignedByte();
+                char c = dis.readChar();
+
+
+                result.add(new LZ77Token(b1, b2, c));
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading from file: " + e.getMessage());
+        }
+        return result;
     }
 
-   
-    private static void encode(Reader in, Writer out, String[] codeTable) throws IOException {
-	    // atgriež kodēto virkni saskaņā ar Huffman koda koku un kodu tabulu.
-	    System.out.println("HuffmanCompressionHelper");
+    
+    public static ArrayList<LZ77Token> compress(String input) {
+        ArrayList<LZ77Token> result = new ArrayList<LZ77Token>();
+        char[] inputChars = input.toCharArray();
+
+        int i = 0;
+        while (i < inputChars.length) {
+            int matchIndex = 0;
+            int matchLength = 0;
+            for (int j = 1; j <= Math.min(MAX_MATCH_LENGTH, inputChars.length - i); j++) {
+                boolean foundMatch = false;
+                for (int k = Math.max(0, i - DICTIONARY_BUFFER_SIZE); k < i; k++) {
+                    int l = 0;
+                    while (l < j && inputChars[k + l] == inputChars[i + l]) {
+                        l++;
+                    }
+                    if (l == j) {
+                        matchIndex = i - k;
+                        matchLength = j;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+                if (!foundMatch) {
+                    break;
+                }
+            }
+            char nextChar = (i + matchLength < inputChars.length) ? inputChars[i + matchLength] : '\0';
+            result.add(new LZ77Token(matchIndex, matchLength, nextChar));
+            i += matchLength + 1;
+        }
+        
+        return result;
+    }
+    
+    public static String decompress(ArrayList<LZ77Token> tokens) {
+        StringBuilder result = new StringBuilder();
+        for (LZ77Token token : tokens) {
+            int startIndex = result.length() - token.getIndex();
+            if (startIndex < 0) {
+                startIndex = 0;
+            }
+            int endIndex = startIndex + token.getLength();
+            if (endIndex <= result.length()) {
+                result.append(result.substring(startIndex, endIndex));
+            } else {
+                for (int i = startIndex; i < result.length() && i < endIndex; i++) {
+                    result.append(result.charAt(i));
+                }
+            }
+            if (token.getCharacter() != '\0') {
+            
+            	result.append(token.getCharacter());
+
+	
+
+            }
+        }
+        return result.toString();
     }
 
-    public static void compress(String inputFile, String outputFile) throws IOException {
-	    // saspiež avota tekstu, izmantojot Huffman algoritmu
-	    System.out.println("HuffmanCompression");
-	    //encode();
-    }
 
-    public static void decompress(String inputFile, String outputFile) throws IOException {
-	    // dekomprese saspiestu failu tā sākotnējā formātā. 
-            System.out.println("HuffmanDecompression");
-	    //decode();
-    }
-
-   
-    private static void decode(InputStream in, Writer out, Node root, String[] codeTable) throws IOException {
-	    // palig metode Huffaman dekompresijai
-	    System.out.println("HuffmanDecompressionHelper");
+    
+    public static class LZ77Token {
+        
+        private int index;
+        private int length;
+        private char character;
+        
+        public LZ77Token(int index, int length, char character) {
+            this.index = index;
+            this.length = length;
+            this.character = character;
+        }
+        
+        public int getIndex() {
+            return index;
+        }
+        
+        public int getLength() {
+            return length;
+        }
+        
+        public char getCharacter() {
+            return character;
+        }
         
     }
+    
 }
