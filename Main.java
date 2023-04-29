@@ -66,14 +66,17 @@ public class Main {
 				break;
 			case "exit":
 				break loop;
+            default:
+			    System.out.println("wrong command");
 			}
+            
 		}
 
 		sc.close();
 	}
 
 	public static void comp(String sourceFile, String resultFile) throws IOException {
-		int method=4; 	// change to see different methods, 
+		int method=5; 	// change to see different methods, 
 						// change decomp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
@@ -85,12 +88,17 @@ public class Main {
 			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
         	LZ77.writeToFile(compressed, resultFile);
 			break;
-		case 3: // LZ77 + Huffman
+		case 3: // Anastasija Ostrovska - Huffman
+			Huffman Hf = new Huffman();
+   			File infile = new File(sourceFile);
+    		File outfile = new File(resultFile);
+			Hf.Huffman_encoding(infile, outfile);
+			break;
+		case 4: // LZ77 + Huffman
 			String input1 = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed1 = LZ77.compress(input1);
         	LZ77.writeToFile(compressed1, resultFile+".temporaryFile");
         	
-        	// Anastasija Ostrovska - Huffman
 			Huffman Hf1 = new Huffman();
    			File infile1 = new File(resultFile+".temporaryFile");
     		File outfile1 = new File(resultFile);
@@ -99,11 +107,10 @@ public class Main {
 			File f = new File(resultFile+".temporaryFile");
 			f.delete();
 			break;
-		case 4: // LZSS + Huffman - the best!
+		case 5: // LZSS + Huffman - the best!
 			LZSS lz1= new LZSS(sourceFile,resultFile+".temporaryFile");
 			lz1.compress();
 			
-			// Anastasija Ostrovska - Huffman
 			Huffman Hf2 = new Huffman();
    			File infile2 = new File(resultFile+".temporaryFile");
     		File outfile2 = new File(resultFile);
@@ -118,7 +125,7 @@ public class Main {
 	}
 
 	public static void decomp(String sourceFile, String resultFile) throws IOException{
-		int method=4;	// change to see different methods, 
+		int method=5;	// change to see different methods, 
 						// change comp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
@@ -131,8 +138,13 @@ public class Main {
 	        
 	        LZ77.writeToDecompressedFile(decompressed, resultFile);
 			break;
-		case 3: // LZ77 + Huffman
-			// Anastasija Ostrovska - Huffman
+		case 3: // Anastasija Ostrovska - Huffman
+			Huffman Hf = new Huffman();
+   			File infile = new File(sourceFile);
+    		File outfile = new File(resultFile);
+			Hf.Huffman_decoding(infile, outfile);
+			break;   
+		case 4: // LZ77 + Huffman
 			Huffman Hf1 = new Huffman();
    			File infile1 = new File(sourceFile);
     		File outfile1 = new File(sourceFile+".temporaryFile");
@@ -145,8 +157,7 @@ public class Main {
 			File f = new File(sourceFile+".temporaryFile");
 			f.delete();
 			break;
-		case 4: // LZSS + Huffman - the best!
-			// Anastasija Ostrovska - Huffman
+		case 5: // LZSS + Huffman - the best!
 			Huffman Hf2 = new Huffman();
    			File infile2 = new File(sourceFile);
     		File outfile2 = new File(sourceFile+".temporaryFile");
@@ -225,8 +236,8 @@ class LZSS{
 		sourceFile=sfile;
 		resultFile=rfile;
 		bufferSize1=4096;
-        bufferSize2=4096;
-		//System.out.println("lz77 inicializācija");
+		bufferSize2=4096;
+		//System.out.println("LZSS inicializācija");
 		
 	}
 	public void compress() throws IOException{
@@ -253,8 +264,8 @@ class LZSS{
         
 	 	
 		byte outIndex=0; // izseko izvades bufera poziciju
-		byte flag=0; // izseko karogus (atsauce vai vienkaršs baits)
-		byte flagIndex=0; // skaita baitus lidz 8, lai pievenotu karogus
+		byte flag=0; // izseko karogus (norada atsauce vai vienkaršs baits)
+		byte flagIndex=0; // skaita bitus lidz 8, lai pievenotu karogus
 		int position=0; // tagadeja saspiešanas pozicija 
         
 		while (true) {
@@ -301,8 +312,7 @@ class LZSS{
 				}
 				this.buffer2 = new byte[this.bufferSize2];
 				input.read(this.buffer2);
-				//System.out.println("left: "+input.available());
-            		}
+            }
             
 			if((position >= this.bufferSize1+this.bufferSize2) && input.available()==0) break;
 		}
@@ -396,7 +406,6 @@ class LZSS{
 					output.write(buffer1);
 					this.buffer1=this.buffer2;
 					this.buffer2 = new byte[this.bufferSize2];
-					//System.out.println(input.available());
             	}
             
 			if(input.available()==0) break;
@@ -434,7 +443,6 @@ class LZSS{
 		    	// iegūt atkartojuma garumu
 		    	while (startPosition + length < bufferSize && bufferGet(startPosition + length) == bufferGet(i + length) ) {
 				length++;
-				//System.out.println(i+" "+length+" "+ buffer[startPosition + length]+"=" + buffer[i + length] );
 		    	}
 		    	if (length >= maxLength && length>=3 && length<127) {
 				maxLength = length;
@@ -459,7 +467,6 @@ class LZSS{
 				pointer[0]=(byte)maxLength;
 				pointer[1]=(byte)maxDistance;
 			}
-			//System.out.println(maxDistance+" "+maxLength);
 			return pointer;
 		}
 	}
