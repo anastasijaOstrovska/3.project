@@ -80,21 +80,25 @@ public class Main {
 						// change decomp too! 
 		switch (method){
 		case 1: // Anželika Krasiļņikova - LZSS
+            System.out.println("Compress file with LZSS algorithm");
 			LZSS lz= new LZSS(sourceFile,resultFile);
 			lz.compress();
 			break;
 		case 2: // Edvards Bārtulis - LZ77
+            System.out.println("Compress file with LZ77 algorithm");
 			String input = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed = LZ77.compress(input);
         	LZ77.writeToFile(compressed, resultFile);
 			break;
 		case 3: // Anastasija Ostrovska - Huffman
+            System.out.println("Compress file with Huffman algorithm");
 			Huffman Hf = new Huffman();
    			File infile = new File(sourceFile);
     		File outfile = new File(resultFile);
 			Hf.Huffman_encoding(infile, outfile);
 			break;
 		case 4: // LZ77 + Huffman
+            System.out.println("Compress file with LZ77 and Huffman algorithm");
 			String input1 = LZ77.readFromFile(sourceFile);
 			ArrayList<LZ77.LZ77Token> compressed1 = LZ77.compress(input1);
         	LZ77.writeToFile(compressed1, resultFile+".temporaryFile");
@@ -108,6 +112,7 @@ public class Main {
 			f.delete();
 			break;
 		case 5: // LZSS + Huffman - the best!
+            System.out.println("Compress file with LZSS and Huffman algorithm");
 			LZSS lz1= new LZSS(sourceFile,resultFile+".temporaryFile");
 			lz1.compress();
 			
